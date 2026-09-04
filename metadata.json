@@ -1,0 +1,6 @@
+{
+  "name": "VUEW",
+  "description": "Team Accountability & Execution Platform - Eliminate status inquiries with automated task progress, blocker alerts, and real-time accountability.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -221,7 +221,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'VUEW-102',
     title: 'User Authentication & RBAC API',
-    description: 'Implement secure JWT authentication, session persistence, role permissions matrix (Admin, Manager, Team Member, Viewer), and role-protected endpoint authorization.',
+    description: 'Implement secure PIN authentication, session persistence, role permissions matrix (Admin vs Team Member), and role-protected endpoint authorization.',
     projectId: 'proj-1',
     assigneeId: 'usr-3', // David James
     creatorId: 'usr-5', // Alex Mercer
@@ -233,8 +233,8 @@ export const INITIAL_TASKS: Task[] = [
     estimatedCompletionDate: '2026-09-04',
     createdAt: '2026-08-28T09:00:00Z',
     updatedAt: '2026-09-04T13:40:00Z',
-    latestProgressUpdate: 'Wrapped JWT token refresh lifecycle, rate-limiting guards, and verified RBAC policy suite. Passed 48 unit tests.',
-    nextStep: 'Awaiting manager sign-off and production staging merge.',
+    latestProgressUpdate: 'Wrapped PIN verification lifecycle, rate-limiting guards, and verified RBAC policy suite. Passed 48 unit tests.',
+    nextStep: 'Awaiting admin sign-off and production staging merge.',
     blockedReason: '',
     health: 'ON_TRACK',
     attachments: [
@@ -337,7 +337,7 @@ export const INITIAL_TASKS: Task[] = [
   {
     id: 'VUEW-107',
     title: 'Automated Slack & Webhook Notification Integration',
-    description: 'Build outbound webhook triggers so task updates, blocker alerts, and manager approvals can broadcast to team Slack channels automatically.',
+    description: 'Build outbound webhook triggers so task updates, blocker alerts, and admin approvals can broadcast to team Slack channels automatically.',
     projectId: 'proj-3',
     assigneeId: 'usr-1', // John Doe
     creatorId: 'usr-2', // Sarah Williams
@@ -447,8 +447,8 @@ export const INITIAL_TASK_UPDATES: TaskUpdate[] = [
     userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     progressPercentage: 50,
     status: 'IN_PROGRESS',
-    accomplished: 'Finished authentication middleware and password hashing abstractions.',
-    currentlyWorkingOn: 'Writing RBAC policy evaluator for Admin vs Manager vs Team Member vs Viewer.',
+    accomplished: 'Finished authentication middleware and PIN verification abstractions.',
+    currentlyWorkingOn: 'Writing RBAC policy evaluator for Admin vs Team Member permissions.',
     nextStep: 'Build integration tests for role endpoints.',
     isBlocked: false,
     estimatedCompletionDate: '2026-09-04',
@@ -462,7 +462,7 @@ export const INITIAL_TASK_UPDATES: TaskUpdate[] = [
     userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     progressPercentage: 100,
     status: 'IN_REVIEW',
-    accomplished: 'Wrapped JWT rotation, session persistence and role-based permissions matrix. Submitted for manager approval.',
+    accomplished: 'Wrapped PIN rotation, session persistence and role-based permissions matrix. Submitted for admin approval.',
     currentlyWorkingOn: 'Nothing currently active. Ready for review.',
     nextStep: 'Awaiting review feedback before deploying to staging.',
     isBlocked: false,
@@ -562,7 +562,7 @@ export const INITIAL_NOTIFICATIONS: Notification[] = [
     id: 'notif-3',
     userId: 'usr-2',
     title: 'Task Ready for Review: VUEW-102',
-    message: 'David James submitted "User Authentication & RBAC API" for manager approval.',
+    message: 'David James submitted "User Authentication & RBAC API" for admin approval.',
     type: 'SUBMITTED_FOR_REVIEW',
     taskId: 'VUEW-102',
     projectId: 'proj-1',
@@ -599,7 +599,7 @@ export const INITIAL_ACTIVITY_LOGS: ActivityLog[] = [
     userId: 'usr-3',
     userName: 'David James',
     userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    action: 'submitted work for manager review (100%)',
+    action: 'submitted work for admin review (100%)',
     objectType: 'TASK',
     objectId: 'VUEW-102',
     objectTitle: 'User Authentication & RBAC API',
@@ -951,7 +951,7 @@ class DatabaseService {
       objectTitle: updatedTask.title,
     });
 
-    // Notify Managers/Creator
+    // Notify Admins/Creator
     const project = this.getProjectById(updatedTask.projectId);
     const notifyUserIds = new Set<string>();
     if (updatedTask.creatorId && updatedTask.creatorId !== user.id) {
@@ -995,10 +995,10 @@ class DatabaseService {
     return { task: updatedTask, taskUpdate: newUpdate };
   }
 
-  // Manager Review: Approve or Request Changes
+  // Admin Review: Approve or Request Changes
   public reviewTask(
     taskId: string,
-    manager: User,
+    reviewer: User,
     decision: 'APPROVE' | 'REQUEST_CHANGES',
     feedback?: string
   ): Task {
@@ -1019,17 +1019,17 @@ class DatabaseService {
       updatedAt: now,
       latestProgressUpdate:
         decision === 'APPROVE'
-          ? `Approved by ${manager.name}. Work completed.`
-          : `Changes requested by ${manager.name}: "${feedback || 'Review requested changes'}"`,
+          ? `Approved by ${reviewer.name}. Work completed.`
+          : `Changes requested by ${reviewer.name}: "${feedback || 'Review requested changes'}"`,
     };
 
     tasks[index] = updatedTask;
     this.set(STORAGE_KEYS.TASKS, tasks);
 
     this.logActivity({
-      userId: manager.id,
-      userName: manager.name,
-      userAvatar: manager.avatar,
+      userId: reviewer.id,
+      userName: reviewer.name,
+      userAvatar: reviewer.avatar,
       action: decision === 'APPROVE' ? 'approved task and marked completed' : 'requested changes on task',
       objectType: 'TASK',
       objectId: task.id,
@@ -1037,14 +1037,14 @@ class DatabaseService {
     });
 
     // Notify Assignee
-    if (task.assigneeId !== manager.id) {
+    if (task.assigneeId !== reviewer.id) {
       this.createNotification({
         userId: task.assigneeId,
         title: decision === 'APPROVE' ? `Task Approved: ${task.id}` : `Changes Requested: ${task.id}`,
         message:
           decision === 'APPROVE'
-            ? `${manager.name} approved your work on "${task.title}".`
-            : `${manager.name} requested changes: ${feedback || 'Please see details on task page.'}`,
+            ? `${reviewer.name} approved your work on "${task.title}".`
+            : `${reviewer.name} requested changes: ${feedback || 'Please see details on task page.'}`,
         type: decision === 'APPROVE' ? 'TASK_APPROVED' : 'CHANGES_REQUESTED',
         taskId: task.id,
         projectId: task.projectId,

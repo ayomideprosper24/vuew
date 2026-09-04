@@ -104,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Quick Action for Managers */}
+      {/* Quick Action for Admins */}
       {canCreateTask && (
         <div className="px-4 pt-3">
           <button

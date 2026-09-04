@@ -1,7 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Bell, Plus, CheckCircle2, AlertTriangle, Menu, Shield, LogOut, KeyRound, Settings, ChevronDown } from 'lucide-react';
+import { Search, Bell, Plus, CheckCircle2, AlertTriangle, Menu, Shield, LogOut, KeyRound, Settings, ChevronDown, Download, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
+import { OfflineIndicator } from '../pwa/OfflineIndicator';
+import { PWAInstallModal } from '../pwa/PWAInstallModal';
 import { Avatar } from '../common/Avatar';
 import { Badge } from '../common/Badge';
 import { formatRelativeTime } from '../../utils/helpers';
@@ -24,6 +27,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, setCurrentTa
     setProgressUpdateTaskId,
     tasks,
   } = useData();
+
+  const { isInstalled, isInstallable, install } = usePWAInstall();
+  const [pwaModalOpen, setPwaModalOpen] = useState(false);
 
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -87,6 +93,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, setCurrentTa
 
       {/* Right section: Quick actions + Notifications + Profile */}
       <div className="flex items-center gap-2.5">
+        {/* Real-time Connection Indicator */}
+        <OfflineIndicator />
+
         {/* Fast "Update Progress" button for team members */}
         {myActiveTask && (
           <button
@@ -99,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, setCurrentTa
           </button>
         )}
 
-        {/* Create Task button for Managers & Admins */}
+        {/* Create Task button for Admins */}
         {canCreateTask && (
           <button
             onClick={() => setCreateTaskModalOpen(true)}
@@ -249,6 +258,38 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, setCurrentTa
                   <span>Security &amp; Preferences</span>
                 </button>
 
+                {/* PWA Install Entry in User Menu */}
+                {isInstalled ? (
+                  <div className="w-full px-3.5 py-2 text-left text-xs text-slate-400 flex items-center gap-2.5">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>VUEW App Installed</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setUserDropdownOpen(false);
+                      if (isInstallable) {
+                        const outcome = await install();
+                        if (outcome === 'manual_instructions') {
+                          setPwaModalOpen(true);
+                        }
+                      } else {
+                        setPwaModalOpen(true);
+                      }
+                    }}
+                    className="w-full px-3.5 py-2 text-left text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 flex items-center justify-between transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Download className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Install Vuew App</span>
+                    </div>
+                    <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded border border-blue-500/30">
+                      PWA
+                    </span>
+                  </button>
+                )}
+
                 <div className="border-t border-slate-800 my-1" />
 
                 <button
@@ -267,6 +308,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, setCurrentTa
           )}
         </div>
       </div>
+
+      <PWAInstallModal isOpen={pwaModalOpen} onClose={() => setPwaModalOpen(false)} />
     </header>
   );
 };

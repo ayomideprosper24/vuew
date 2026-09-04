@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Settings,
   User as UserIcon,
@@ -15,18 +15,34 @@ import {
   EyeOff,
   RefreshCw,
   Lock,
+  Smartphone,
+  CheckCircle,
+  Sparkles,
+  Wifi,
+  Send,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { usePWAInstall } from '../hooks/usePWAInstall';
+import { PWAInstallModal } from '../components/pwa/PWAInstallModal';
+import { pushNotificationService } from '../services/pushNotification';
 import { Avatar } from '../components/common/Avatar';
 import { Badge } from '../components/common/Badge';
 
 export const SettingsPage: React.FC = () => {
   const { currentUser, allUsers, setMemberPin, updateProfile, refreshUsers } = useAuth();
   const { tasks, projects, resetDemoData } = useData();
+  const { isInstalled, isInstallable, platform, install } = usePWAInstall();
+  const [installModalOpen, setInstallModalOpen] = useState(false);
+
+  // Push notification state
+  const [pushPermission, setPushPermission] = useState<NotificationPermission>(() =>
+    pushNotificationService.getPermission()
+  );
+  const [pushStatusMessage, setPushStatusMessage] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<
-    'PROFILE' | 'PIN_SECURITY' | 'NOTIFICATIONS' | 'ACCOUNTABILITY' | 'ROLES' | 'DATA'
+    'PROFILE' | 'PIN_SECURITY' | 'INSTALL_APP' | 'NOTIFICATIONS' | 'ACCOUNTABILITY' | 'ROLES' | 'DATA'
   >('PROFILE');
 
   // Local state for profile form
@@ -133,6 +149,7 @@ export const SettingsPage: React.FC = () => {
           [
             { id: 'PROFILE', label: 'My Profile', icon: UserIcon },
             { id: 'PIN_SECURITY', label: 'PIN Security & Access', icon: KeyRound },
+            { id: 'INSTALL_APP', label: 'Install App', icon: Download },
             { id: 'NOTIFICATIONS', label: 'Notifications', icon: Bell },
             { id: 'ACCOUNTABILITY', label: 'Accountability Rules', icon: Sliders },
             { id: 'ROLES', label: 'Roles & Permissions', icon: Shield },
@@ -471,6 +488,125 @@ export const SettingsPage: React.FC = () => {
         </div>
       )}
 
+      {/* Tab: INSTALL APP (PWA) */}
+      {activeTab === 'INSTALL_APP' && (
+        <div className="space-y-6">
+          {/* Main Install Card */}
+          <div className="p-6 rounded-2xl bg-gradient-to-r from-blue-950/40 via-slate-900 to-indigo-950/30 border border-blue-500/30 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-xl shadow-[0_0_25px_rgba(59,130,246,0.4)] flex-shrink-0">
+                  V
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-white">Install Vuew</h3>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    Install Vuew on your device for quick access.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                {isInstalled ? (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>App Installed (Standalone Mode)</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (isInstallable) {
+                        const outcome = await install();
+                        if (outcome === 'manual_instructions') {
+                          setInstallModalOpen(true);
+                        }
+                      } else {
+                        setInstallModalOpen(true);
+                      }
+                    }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-600/30 transition-all active:scale-[0.98]"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Install App</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-800/80">
+              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs">
+                <p className="font-semibold text-white mb-1">Seamless Launch</p>
+                <p className="text-[11px] text-slate-400">
+                  Runs in an exclusive standalone window without browser toolbars or tabs.
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs">
+                <p className="font-semibold text-white mb-1">Offline Resilience</p>
+                <p className="text-[11px] text-slate-400">
+                  Static assets precached for instantaneous startup and network drop protection.
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs">
+                <p className="font-semibold text-white mb-1">Session &amp; PIN Preserved</p>
+                <p className="text-[11px] text-slate-400">
+                  Your secure PIN credentials and active workspace context stay intact.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Device & Platform Capabilities */}
+          <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Target Device Support &amp; Installation Instructions
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 text-white font-semibold text-xs">
+                  <Smartphone className="w-4 h-4 text-blue-400" />
+                  <span>Android &amp; Chrome Mobile</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Clicking &ldquo;Install App&rdquo; prompts Chrome for Android to place VUEW onto your home screen and app drawer.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 text-white font-semibold text-xs">
+                  <Smartphone className="w-4 h-4 text-indigo-400" />
+                  <span>iPhone &amp; iPad (iOS Safari)</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Tap Safari&apos;s Share icon, then select &ldquo;Add to Home Screen&rdquo;. VUEW launches in full standalone mode with custom touch icons.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 text-white font-semibold text-xs">
+                  <Download className="w-4 h-4 text-emerald-400" />
+                  <span>Windows &amp; macOS Desktop</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Install as a desktop application via Chrome or Edge. Adds VUEW to your Windows Start Menu or macOS Applications folder.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 text-white font-semibold text-xs">
+                  <Wifi className="w-4 h-4 text-amber-400" />
+                  <span>Offline Storage Status</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Service Worker actively precaches application assets. Local task and project storage is kept in sync.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tab: NOTIFICATIONS */}
       {activeTab === 'NOTIFICATIONS' && (
         <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-5">
@@ -537,6 +673,89 @@ export const SettingsPage: React.FC = () => {
                 onChange={() => setSlackAlerts(!slackAlerts)}
                 className="w-4 h-4 rounded text-blue-600 focus:ring-0"
               />
+            </div>
+          </div>
+
+          {/* Web Push Notification Section for PWA */}
+          <div className="mt-6 pt-5 border-t border-slate-800 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                    Web Push Device Notifications (PWA)
+                  </h4>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase ${
+                      pushPermission === 'granted'
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        : pushPermission === 'denied'
+                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    }`}
+                  >
+                    Permission: {pushPermission}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Deliver urgent task updates, blocker alerts, and approvals directly to your device lock screen even when VUEW is running in the background.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2.5">
+              <button
+                type="button"
+                onClick={async () => {
+                  const perm = await pushNotificationService.requestPermission();
+                  setPushPermission(perm);
+                  if (perm === 'granted') {
+                    setPushStatusMessage('Push notifications enabled for this device!');
+                    setTimeout(() => setPushStatusMessage(''), 4000);
+                  } else {
+                    setPushStatusMessage('Notification permission not granted.');
+                    setTimeout(() => setPushStatusMessage(''), 4000);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all"
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span>{pushPermission === 'granted' ? 'Notification Status: Active' : 'Enable Web Push Alerts'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  if (pushPermission !== 'granted') {
+                    const perm = await pushNotificationService.requestPermission();
+                    setPushPermission(perm);
+                    if (perm !== 'granted') return;
+                  }
+                  await pushNotificationService.sendLocalNotification({
+                    title: 'VUEW: Task Blocker Flagged',
+                    body: 'Assignee reported an urgent blocker on Cloud Run API Migration.',
+                    category: 'TASK_BLOCKED',
+                  });
+                  setPushStatusMessage('Test notification sent to device notification center.');
+                  setTimeout(() => setPushStatusMessage(''), 4000);
+                }}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 border border-slate-700 text-xs font-semibold transition-all"
+              >
+                <Send className="w-3.5 h-3.5 text-blue-400" />
+                <span>Dispatch Test Push Alert</span>
+              </button>
+            </div>
+
+            {pushStatusMessage && (
+              <p className="text-xs text-blue-400 font-medium animate-in fade-in">
+                {pushStatusMessage}
+              </p>
+            )}
+
+            <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 text-[11px] text-slate-400 space-y-1">
+              <p className="font-semibold text-slate-300">Push Notification Architecture Note:</p>
+              <p>
+                The PWA service worker supports Web Push subscriptions. Notifications are scrubbed of sensitive internal strings to maintain lock-screen privacy. In cloud environments, configure server-side VAPID keys (<code className="text-blue-300 font-mono">VITE_VAPID_PUBLIC_KEY</code>) to dispatch remote automated cron pings.
+              </p>
             </div>
           </div>
         </div>
@@ -713,6 +932,9 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* PWA Install Modal Guide */}
+      <PWAInstallModal isOpen={installModalOpen} onClose={() => setInstallModalOpen(false)} />
     </div>
   );
 };

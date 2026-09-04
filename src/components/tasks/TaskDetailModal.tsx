@@ -136,7 +136,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, onClos
           </div>
         </div>
 
-        {/* Manager Review Action Banner (When task reaches 100% or IN_REVIEW) */}
+        {/* Admin Review Action Banner (When task reaches 100% or IN_REVIEW) */}
         {task.status === 'IN_REVIEW' && (
           <div className="p-4 rounded-xl bg-purple-950/30 border border-purple-500/40 space-y-3">
             <div className="flex items-center justify-between">
@@ -145,7 +145,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, onClos
                 <div>
                   <h4 className="text-sm font-bold text-white">Work Submitted for Review (100%)</h4>
                   <p className="text-xs text-purple-300">
-                    Awaiting manager review before officially marking as Completed.
+                    Awaiting admin review before officially marking as Completed.
                   </p>
                 </div>
               </div>
@@ -198,7 +198,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ taskId, onClos
         {/* Task Review Feedback note if requested previously */}
         {task.reviewFeedback && (
           <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300">
-            <strong>Manager Feedback:</strong> &ldquo;{task.reviewFeedback}&rdquo;
+            <strong>Admin Feedback:</strong> &ldquo;{task.reviewFeedback}&rdquo;
           </div>
         )}
 

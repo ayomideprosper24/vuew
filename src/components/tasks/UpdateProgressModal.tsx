@@ -127,7 +127,7 @@ export const UpdateProgressModal: React.FC<UpdateProgressModalProps> = ({ taskId
             <p className="text-xs text-purple-300 bg-purple-950/40 p-2.5 rounded-lg border border-purple-500/30 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-400 flex-shrink-0" />
               <span>
-                Reaching 100% will automatically submit this task for <strong>Manager Review</strong>.
+                Reaching 100% will automatically submit this task for <strong>Admin Review</strong>.
               </span>
             </p>
           )}

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="vuewBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="vuewGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA" />
+      <stop offset="50%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#4F46E5" />
+    </linearGradient>
+    <linearGradient id="vuewGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+    <linearGradient id="vuewAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <filter id="vuewGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="512" height="512" rx="112" fill="url(#vuewBg)" />
+  <rect width="510" height="510" x="1" y="1" rx="111" fill="none" stroke="#1E293B" stroke-width="2" />
+
+  <!-- Subtle Ambient Glow -->
+  <circle cx="256" cy="240" r="140" fill="#3B82F6" opacity="0.18" filter="url(#vuewGlow)" />
+
+  <!-- Left Stem of VUEW 'V' -->
+  <path
+    d="M136 140 L196 140 L256 332 L224 380 L136 140 Z"
+    fill="url(#vuewGrad2)"
+  />
+
+  <!-- Right Stem of VUEW 'V' (overlapping for optical depth) -->
+  <path
+    d="M376 140 L316 140 L240 380 L288 380 L376 140 Z"
+    fill="url(#vuewGrad1)"
+  />
+
+  <!-- Center Execution Horizon / Focus Aperture -->
+  <polygon
+    points="256,230 292,302 220,302"
+    fill="#FFFFFF"
+    opacity="0.95"
+  />
+
+  <!-- Accountability Pulse Node -->
+  <circle cx="256" cy="180" r="16" fill="url(#vuewAccent)" />
+  <circle cx="256" cy="180" r="24" fill="none" stroke="#34D399" stroke-width="3" opacity="0.6" />
+</svg>

@@ -64,7 +64,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateToTab })
 
   // Individual Team Progress calculation
   const teamProgressList = allUsers
-    .filter((u) => u.role !== 'VIEWER')
     .map((member) => {
       const userTasks = tasks.filter((t) => t.assigneeId === member.id);
       const userActive = userTasks.filter((t) => t.status !== 'COMPLETED' && t.status !== 'CANCELLED');
@@ -370,7 +369,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateToTab })
               <span>VUEW Rule</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              When work hits 100%, tasks advance into <strong>IN REVIEW</strong>. Managers approve or
+              When work hits 100%, tasks advance into <strong>IN REVIEW</strong>. Admins approve or
               request specific changes with feedback directly inside the thread.
             </p>
           </div>

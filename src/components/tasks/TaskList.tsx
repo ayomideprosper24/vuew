@@ -22,10 +22,18 @@ export const TaskList: React.FC<TaskListProps> = ({
   const { setSelectedTaskId, setProgressUpdateTaskId, projects } = useData();
   const { allUsers, canUpdateProgress } = useAuth();
 
+  if (tasks.length === 0) {
+    return (
+      <div className="w-full rounded-lg border border-slate-800 bg-slate-900/40 p-8 text-center text-xs text-slate-500">
+        No tasks found matching current filters.
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 shadow-sm">
+    <div className="w-full overflow-x-auto rounded-lg border border-slate-800 bg-slate-900/40">
       <table className="w-full text-left text-xs text-slate-300">
-        <thead className="bg-slate-950/80 border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider select-none">
+        <thead className="bg-slate-950/80 border-b border-slate-800 text-[10px] font-semibold text-slate-400 uppercase tracking-wider select-none">
           <tr>
             <th className="py-3 px-4">Task</th>
             {showProject && <th className="py-3 px-3">Project</th>}

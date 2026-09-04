@@ -4,6 +4,7 @@ import { DataProvider, useData } from './context/DataContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Navbar } from './components/layout/Navbar';
 import { MobileNav } from './components/layout/MobileNav';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { GlobalSearchModal } from './components/layout/GlobalSearchModal';
 
 // Pages
@@ -91,13 +92,20 @@ const AppContent: React.FC = () => {
           />
 
           {/* Main Body */}
-          <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-6">
+          <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pt-5 pb-24 lg:pb-8">
             <div className="max-w-7xl mx-auto w-full">
               {renderActivePage()}
             </div>
           </main>
         </div>
       </div>
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+        onOpenDrawer={() => setMobileMenuOpen(true)}
+      />
 
       {/* Global Modals */}
       <TaskDetailModal

@@ -255,14 +255,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, setCurrentTa
                   className="w-full px-3.5 py-2 text-left text-xs text-slate-300 hover:text-white hover:bg-slate-800/70 flex items-center gap-2.5 transition-colors"
                 >
                   <Settings className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Security &amp; Preferences</span>
+                  <span>Settings</span>
                 </button>
 
                 {/* PWA Install Entry in User Menu */}
                 {isInstalled ? (
                   <div className="w-full px-3.5 py-2 text-left text-xs text-slate-400 flex items-center gap-2.5">
                     <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>VUEW App Installed</span>
+                    <span>App Installed</span>
                   </div>
                 ) : (
                   <button
@@ -282,7 +282,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, setCurrentTa
                   >
                     <div className="flex items-center gap-2.5">
                       <Download className="w-3.5 h-3.5 text-blue-400" />
-                      <span>Install Vuew App</span>
+                      <span>Install App</span>
                     </div>
                     <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded border border-blue-500/30">
                       PWA
@@ -301,7 +301,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleMobileMenu, setCurrentTa
                   className="w-full px-3.5 py-2 text-left text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-2.5 transition-colors"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span>Lock &amp; Return to PIN Login</span>
+                  <span>Sign Out</span>
                 </button>
               </div>
             </div>

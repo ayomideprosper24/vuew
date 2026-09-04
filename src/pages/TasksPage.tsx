@@ -74,32 +74,31 @@ export const TasksPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 border-b border-slate-800 pb-5">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            <ListTodo className="w-6 h-6 text-blue-400" />
-            <span>Task Directory</span>
+          <h1 className="text-xl font-bold text-white tracking-tight">
+            Tasks
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Global repository of all company work items, deliverables, and operational milestones.
+            Track tasks and deadlines across all active projects.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {canCreateTask && (
             <button
               onClick={() => setCreateTaskModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-[0.98]"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-colors"
             >
-              <Plus className="w-4 h-4" />
-              <span>Create Task</span>
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Task</span>
             </button>
           )}
         </div>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+      <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-800 space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Search box */}
           <div className="relative flex-1">

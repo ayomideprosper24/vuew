@@ -133,22 +133,21 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-12 max-w-4xl">
       {/* Header */}
-      <div>
-        <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-          <Settings className="w-6 h-6 text-blue-400" />
-          <span>Platform Settings &amp; Governance</span>
+      <div className="border-b border-slate-800 pb-5">
+        <h1 className="text-xl font-bold text-white tracking-tight">
+          Settings
         </h1>
         <p className="text-xs text-slate-400 mt-1">
-          Manage user profiles, PIN security authentication, accountability policies, and operational snapshots.
+          Profile, security credentials, notifications, and preferences.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-slate-800 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-1 border-b border-slate-800/80 pb-2 overflow-x-auto">
         {(
           [
-            { id: 'PROFILE', label: 'My Profile', icon: UserIcon },
-            { id: 'PIN_SECURITY', label: 'PIN Security & Access', icon: KeyRound },
+            { id: 'PROFILE', label: 'Profile', icon: UserIcon },
+            { id: 'PIN_SECURITY', label: 'Security & PIN', icon: KeyRound },
             { id: 'INSTALL_APP', label: 'Install App', icon: Download },
             { id: 'NOTIFICATIONS', label: 'Notifications', icon: Bell },
             { id: 'ACCOUNTABILITY', label: 'Accountability Rules', icon: Sliders },
@@ -161,13 +160,13 @@ export const SettingsPage: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-2 rounded-xl text-xs font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
+              className={`px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-blue-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/60'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
             </button>
           );

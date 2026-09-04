@@ -78,12 +78,12 @@ export const MobileNav: React.FC<MobileNavProps> = ({
         <div className="relative w-4/5 max-w-xs bg-slate-950 border-r border-slate-800 flex flex-col h-full z-10 p-5">
           <div className="flex items-center justify-between pb-4 border-b border-slate-800">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-extrabold text-sm">
+              <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-sm tracking-tight">
                 V
               </div>
               <div>
-                <span className="font-extrabold tracking-tight text-white font-mono">VUEW</span>
-                <p className="text-[10px] text-slate-400">Accountability Platform</p>
+                <span className="font-bold text-sm text-white tracking-tight">VUEW</span>
+                <p className="text-[10px] text-slate-500 leading-tight">Vuew Team</p>
               </div>
             </div>
             <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg">

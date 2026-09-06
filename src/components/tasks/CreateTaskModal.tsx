@@ -14,6 +14,10 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   const { projects, createTask } = useData();
   const { allUsers, currentUser } = useAuth();
 
+  if (currentUser.role !== 'ADMIN') {
+    return null;
+  }
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [projectId, setProjectId] = useState(projects[0]?.id || '');

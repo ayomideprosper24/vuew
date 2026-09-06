@@ -2,14 +2,15 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Role } from '../types';
 import { auth, AuthService } from '../services/auth';
 import { db } from '../services/db';
+import { syncUserToSupabase } from '../services/supabaseSync';
 
 interface AuthContextType {
   currentUser: User;
   allUsers: User[];
   isAuthenticated: boolean;
   switchUser: (userId: string) => void;
-  adminLoginWithPin: (pin: string) => { success: boolean; error?: string };
-  memberLoginWithPin: (userId: string, pin: string) => { success: boolean; error?: string };
+  adminLoginWithPin: (pin: string) => Promise<{ success: boolean; error?: string }>;
+  memberLoginWithPin: (userId: string, pin: string) => Promise<{ success: boolean; error?: string }>;
   setMemberPin: (userId: string, newPin: string) => boolean;
   createTeamMember: (data: {
     name: string;
@@ -54,8 +55,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const adminLoginWithPin = (pin: string) => {
-    const res = auth.adminLoginWithPin(pin);
+  const adminLoginWithPin = async (pin: string) => {
+    const res = await auth.adminLoginWithPin(pin);
     if (res.success && res.user) {
       setCurrentUser({ ...res.user });
       setIsAuthenticated(true);
@@ -65,8 +66,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: false, error: res.error || 'Incorrect Admin PIN' };
   };
 
-  const memberLoginWithPin = (userId: string, pin: string) => {
-    const res = auth.memberLoginWithPin(userId, pin);
+  const memberLoginWithPin = async (userId: string, pin: string) => {
+    const res = await auth.memberLoginWithPin(userId, pin);
     if (res.success && res.user) {
       setCurrentUser({ ...res.user });
       setIsAuthenticated(true);
@@ -109,6 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     db.updateUser(updated);
     setCurrentUser(updated);
     refreshUsers();
+    syncUserToSupabase(updated);
   };
 
   const canCreateTask = AuthService.canCreateTask(currentUser.role);

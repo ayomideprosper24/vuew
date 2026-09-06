@@ -131,6 +131,14 @@ class PushNotificationService {
     }
   }
 
+  public async sendTestNotification(): Promise<boolean> {
+    return this.sendLocalNotification({
+      title: 'VUEW Accountability Alert',
+      body: 'Test notification delivered successfully to your device lock screen.',
+      category: 'TASK_ASSIGNED',
+    });
+  }
+
   private urlBase64ToUint8Array(base64String: string): Uint8Array {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');

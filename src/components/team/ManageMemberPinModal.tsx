@@ -17,14 +17,14 @@ export const ManageMemberPinModal: React.FC<ManageMemberPinModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { setMemberPin } = useAuth();
+  const { setMemberPin, currentUser } = useAuth();
 
   const [newPin, setNewPin] = useState('');
   const [showPin, setShowPin] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  if (!member) return null;
+  if (!member || currentUser.role !== 'ADMIN') return null;
 
   const handleGenerateRandomPin = () => {
     const random = Math.floor(1000 + Math.random() * 9000).toString();

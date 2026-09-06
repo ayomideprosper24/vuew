@@ -10,8 +10,12 @@ interface CreateTeamMemberModalProps {
 }
 
 export const CreateTeamMemberModal: React.FC<CreateTeamMemberModalProps> = ({ isOpen, onClose }) => {
-  const { createTeamMember } = useAuth();
+  const { createTeamMember, currentUser } = useAuth();
   const { departments } = useData();
+
+  if (currentUser.role !== 'ADMIN') {
+    return null;
+  }
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

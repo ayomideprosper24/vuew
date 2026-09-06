@@ -1,5 +1,11 @@
 import { User, Role } from '../types';
 import { db } from './db';
+import {
+  syncUserPinToSupabase,
+  syncUserToSupabase,
+  verifyOrSyncAdminPin,
+  verifyOrSyncMemberPin,
+} from './supabaseSync';
 
 const AUTH_USER_KEY = 'vuew_current_user_id';
 const AUTH_STATUS_KEY = 'vuew_is_authenticated';
@@ -8,9 +14,16 @@ export class AuthService {
   private currentUserId: string | null = null;
 
   constructor() {
-    this.currentUserId = localStorage.getItem(AUTH_USER_KEY) || 'usr-5'; // Default to Alex Mercer (Admin)
+    const saved = localStorage.getItem(AUTH_USER_KEY);
+    // Sanitize any legacy demo ID
+    if (!saved || saved === 'usr-5') {
+      this.currentUserId = 'usr-admin';
+      localStorage.setItem(AUTH_USER_KEY, 'usr-admin');
+    } else {
+      this.currentUserId = saved;
+    }
     if (!localStorage.getItem(AUTH_STATUS_KEY)) {
-      localStorage.setItem(AUTH_STATUS_KEY, 'true'); // Keep initially authenticated for seamless experience
+      localStorage.setItem(AUTH_STATUS_KEY, 'true');
     }
   }
 
@@ -29,38 +42,62 @@ export class AuthService {
     return admin;
   }
 
-  public adminLoginWithPin(pin: string): { success: boolean; user?: User; error?: string } {
+  public async adminLoginWithPin(pin: string): Promise<{ success: boolean; user?: User; error?: string }> {
     const users = db.getUsers();
     const admin = users.find((u) => u.role === 'ADMIN');
     if (!admin) {
       return { success: false, error: 'No administrator account configured in workspace.' };
     }
 
-    if (admin.pin !== pin.trim()) {
-      return { success: false, error: 'Invalid Admin PIN. Please verify and try again.' };
+    const cleanPin = pin.trim();
+    if (admin.pin === cleanPin) {
+      this.currentUserId = admin.id;
+      localStorage.setItem(AUTH_USER_KEY, admin.id);
+      localStorage.setItem(AUTH_STATUS_KEY, 'true');
+      return { success: true, user: admin };
     }
 
-    this.currentUserId = admin.id;
-    localStorage.setItem(AUTH_USER_KEY, admin.id);
-    localStorage.setItem(AUTH_STATUS_KEY, 'true');
-    return { success: true, user: admin };
+    // Fallback check against Supabase in case admin updated PIN directly in Supabase
+    const verifiedInSupabase = await verifyOrSyncAdminPin(cleanPin);
+    if (verifiedInSupabase) {
+      const refreshedUsers = db.getUsers();
+      const refreshedAdmin = refreshedUsers.find((u) => u.role === 'ADMIN') || admin;
+      this.currentUserId = refreshedAdmin.id;
+      localStorage.setItem(AUTH_USER_KEY, refreshedAdmin.id);
+      localStorage.setItem(AUTH_STATUS_KEY, 'true');
+      return { success: true, user: refreshedAdmin };
+    }
+
+    return { success: false, error: 'Invalid Admin PIN. Please verify and try again.' };
   }
 
-  public memberLoginWithPin(userId: string, pin: string): { success: boolean; user?: User; error?: string } {
+  public async memberLoginWithPin(userId: string, pin: string): Promise<{ success: boolean; user?: User; error?: string }> {
     const users = db.getUsers();
     const member = users.find((u) => u.id === userId);
     if (!member) {
       return { success: false, error: 'Team member account not found.' };
     }
 
-    if (member.pin !== pin.trim()) {
-      return { success: false, error: 'Invalid PIN. Please check the PIN provided by your Admin.' };
+    const cleanPin = pin.trim();
+    if (member.pin === cleanPin) {
+      this.currentUserId = member.id;
+      localStorage.setItem(AUTH_USER_KEY, member.id);
+      localStorage.setItem(AUTH_STATUS_KEY, 'true');
+      return { success: true, user: member };
     }
 
-    this.currentUserId = member.id;
-    localStorage.setItem(AUTH_USER_KEY, member.id);
-    localStorage.setItem(AUTH_STATUS_KEY, 'true');
-    return { success: true, user: member };
+    // Fallback check against Supabase
+    const verifiedInSupabase = await verifyOrSyncMemberPin(userId, cleanPin);
+    if (verifiedInSupabase) {
+      const refreshedUsers = db.getUsers();
+      const refreshedMember = refreshedUsers.find((u) => u.id === userId) || member;
+      this.currentUserId = refreshedMember.id;
+      localStorage.setItem(AUTH_USER_KEY, refreshedMember.id);
+      localStorage.setItem(AUTH_STATUS_KEY, 'true');
+      return { success: true, user: refreshedMember };
+    }
+
+    return { success: false, error: 'Invalid PIN. Please check the PIN provided by your Admin.' };
   }
 
   public switchUser(userId: string): User | null {
@@ -76,8 +113,10 @@ export class AuthService {
 
   public setMemberPin(userId: string, newPin: string, adminUser: User): boolean {
     if (adminUser.role !== 'ADMIN') return false;
-    const success = db.setUserPin(userId, newPin.trim());
+    const cleanPin = newPin.trim();
+    const success = db.setUserPin(userId, cleanPin);
     if (success) {
+      syncUserPinToSupabase(userId, cleanPin);
       const target = db.getUserById(userId);
       db.logActivity({
         userId: adminUser.id,
@@ -123,6 +162,8 @@ export class AuthService {
     };
 
     db.addUser(newMember);
+    // Sync new member to Supabase immediately
+    syncUserToSupabase(newMember);
 
     db.logActivity({
       userId: adminUser.id,

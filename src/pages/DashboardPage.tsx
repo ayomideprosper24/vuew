@@ -99,10 +99,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateToTab })
       {/* Concise Header Overview */}
       <div className="border-b border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">
-            {greeting}, {currentUser.name.split(' ')[0]}
-          </h1>
-          <p className="text-xs text-slate-400 mt-1 font-mono">
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-xl font-bold text-white tracking-tight">
+              {greeting}, {currentUser.name}
+            </h1>
+            <Badge variant="role" role={currentUser.role} size="sm" />
+          </div>
+          <p className="text-xs text-slate-400 font-mono">
             <span className="text-white font-semibold">{activeTasks.length}</span> active tasks
             <span className="text-slate-600 mx-2">·</span>
             <span className={dueTodayTasks.length > 0 ? 'text-blue-400 font-semibold' : 'text-slate-400'}>
@@ -296,15 +299,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateToTab })
               <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                 Team Status
               </h2>
-              {currentUser.role === 'ADMIN' && (
-                <button
-                  onClick={() => onNavigateToTab('team')}
-                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
-                >
-                  <span>Manage Team</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
-              )}
+              <button
+                onClick={() => onNavigateToTab('team')}
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+              >
+                <span>{currentUser.role === 'ADMIN' ? 'Manage Team' : 'View Team'}</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
             </div>
 
             <div className="overflow-x-auto">

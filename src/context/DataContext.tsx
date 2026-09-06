@@ -12,6 +12,17 @@ import {
 } from '../types';
 import { db } from '../services/db';
 import { useAuth } from './AuthContext';
+import {
+  pullFromSupabase,
+  pushToSupabase,
+  clearAndLinkToSupabase,
+  syncTaskToSupabase,
+  syncTaskUpdateToSupabase,
+  syncProjectToSupabase,
+  subscribeToSyncEvents,
+  setupSupabaseRealtime,
+} from '../services/supabaseSync';
+import { getSupabaseConfig } from '../services/supabase';
 
 interface DataContextType {
   tasks: Task[];
@@ -23,6 +34,7 @@ interface DataContextType {
   activityLogs: ActivityLog[];
   settings: SystemSettings;
   unreadNotificationCount: number;
+  isSupabaseConfigured: boolean;
 
   // Modals & Navigation state
   selectedTaskId: string | null;
@@ -40,6 +52,8 @@ interface DataContextType {
 
   // Actions
   refreshData: () => void;
+  syncWithSupabase: () => Promise<{ success: boolean; message: string }>;
+  clearAndLinkSupabase: () => Promise<{ success: boolean; message: string }>;
   createTask: (data: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'progress' | 'health' | 'attachments' | 'latestProgressUpdate' | 'nextStep' | 'blockedReason'>, attachments?: Task['attachments']) => Task;
   recordProgressUpdate: (taskId: string, update: {
     progressPercentage: number;
@@ -64,7 +78,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, refreshUsers } = useAuth();
 
   const [tasks, setTasks] = useState<Task[]>(() => db.getTasks());
   const [projects, setProjects] = useState<Project[]>(() => db.getProjects());
@@ -74,6 +88,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [notifications, setNotifications] = useState<Notification[]>(() => db.getNotifications(currentUser.id));
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => db.getActivityLogs());
   const [settings, setSettings] = useState<SystemSettings>(() => db.getSettings());
+  const [isSupabaseConfigured, setIsSupabaseConfigured] = useState<boolean>(() => getSupabaseConfig().isConfigured);
 
   // Modal states
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -92,11 +107,84 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setNotifications(db.getNotifications(currentUser.id));
     setActivityLogs(db.getActivityLogs());
     setSettings(db.getSettings());
+    setIsSupabaseConfigured(getSupabaseConfig().isConfigured);
   }, [currentUser.id]);
 
   useEffect(() => {
     refreshData();
   }, [currentUser.id, refreshData]);
+
+  // Initial pull and realtime subscriptions when Supabase is configured
+  useEffect(() => {
+    const config = getSupabaseConfig();
+    setIsSupabaseConfigured(config.isConfigured);
+
+    if (config.isConfigured) {
+      pullFromSupabase().then((res) => {
+        if (res.success) {
+          refreshData();
+          refreshUsers();
+        }
+      });
+    }
+
+    const unsubscribeSync = subscribeToSyncEvents(() => {
+      refreshData();
+      refreshUsers();
+    });
+
+    const unsubscribeRealtime = setupSupabaseRealtime(() => {
+      refreshData();
+      refreshUsers();
+    });
+
+    // Auto-refresh when tab gains focus or on interval
+    const handleFocus = () => {
+      if (getSupabaseConfig().isConfigured) {
+        pullFromSupabase().then((res) => {
+          if (res.success) {
+            refreshData();
+            refreshUsers();
+          }
+        });
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+
+    const intervalId = setInterval(() => {
+      if (getSupabaseConfig().isConfigured && document.visibilityState === 'visible') {
+        pullFromSupabase().then((res) => {
+          if (res.success) {
+            refreshData();
+            refreshUsers();
+          }
+        });
+      }
+    }, 20000);
+
+    return () => {
+      unsubscribeSync();
+      unsubscribeRealtime();
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(intervalId);
+    };
+  }, [refreshData, refreshUsers]);
+
+  const syncWithSupabase = async () => {
+    const res = await pullFromSupabase();
+    if (res.success) {
+      refreshData();
+      refreshUsers();
+    }
+    return res;
+  };
+
+  const clearAndLinkSupabase = async () => {
+    const res = await clearAndLinkToSupabase();
+    refreshData();
+    refreshUsers();
+    return res;
+  };
 
   const createTask = (
     data: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'progress' | 'health' | 'attachments' | 'latestProgressUpdate' | 'nextStep' | 'blockedReason'>,
@@ -104,6 +192,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ) => {
     const newTask = db.createTask(data, currentUser, attachments);
     refreshData();
+    syncTaskToSupabase(newTask);
     return newTask;
   };
 
@@ -121,18 +210,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       attachmentName?: string;
     }
   ) => {
-    db.recordProgressUpdate(taskId, currentUser, update);
+    const res = db.recordProgressUpdate(taskId, currentUser, update);
     refreshData();
+    if (res?.taskUpdate) {
+      syncTaskUpdateToSupabase(res.taskUpdate);
+    }
+    const updatedTask = db.getTaskById(taskId);
+    if (updatedTask) {
+      syncTaskToSupabase(updatedTask);
+    }
   };
 
   const reviewTask = (taskId: string, decision: 'APPROVE' | 'REQUEST_CHANGES', feedback?: string) => {
     db.reviewTask(taskId, currentUser, decision, feedback);
     refreshData();
+    const updatedTask = db.getTaskById(taskId);
+    if (updatedTask) {
+      syncTaskToSupabase(updatedTask);
+    }
   };
 
   const createProject = (data: Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'overallProgress' | 'health'>) => {
     const newProj = db.createProject(data, currentUser);
     refreshData();
+    syncProjectToSupabase(newProj);
+    pushToSupabase();
     return newProj;
   };
 
@@ -175,7 +277,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activityLogs,
         settings,
         unreadNotificationCount,
-
+        isSupabaseConfigured,
         selectedTaskId,
         setSelectedTaskId,
         progressUpdateTaskId,
@@ -188,8 +290,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setCreateProjectModalOpen,
         globalSearchOpen,
         setGlobalSearchOpen,
-
         refreshData,
+        syncWithSupabase,
+        clearAndLinkSupabase,
         createTask,
         recordProgressUpdate,
         reviewTask,
@@ -213,3 +316,4 @@ export const useData = () => {
   }
   return context;
 };
+

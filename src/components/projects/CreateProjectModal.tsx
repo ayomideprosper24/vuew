@@ -14,6 +14,10 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
   const { createProject } = useData();
   const { allUsers, currentUser } = useAuth();
 
+  if (currentUser.role !== 'ADMIN') {
+    return null;
+  }
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [ownerId, setOwnerId] = useState(currentUser.id);

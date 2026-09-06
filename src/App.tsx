@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider, useData } from './context/DataContext';
 import { Sidebar } from './components/layout/Sidebar';
@@ -39,6 +39,11 @@ const AppContent: React.FC = () => {
 
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // When a user logs in or switches, land them on their personalized dashboard
+  useEffect(() => {
+    setCurrentTab('dashboard');
+  }, [currentUser.id]);
 
   if (!isAuthenticated) {
     return <AuthPage />;
@@ -84,10 +89,11 @@ const AppContent: React.FC = () => {
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-slate-950">
+        <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-black">
           {/* Top Navbar */}
           <Navbar
-            onToggleMobileMenu={() => setMobileMenuOpen(true)}
+            onToggleMobileMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
+            isMobileMenuOpen={mobileMenuOpen}
             setCurrentTab={setCurrentTab}
           />
 
@@ -104,7 +110,8 @@ const AppContent: React.FC = () => {
       <MobileBottomNav
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
-        onOpenDrawer={() => setMobileMenuOpen(true)}
+        onToggleDrawer={() => setMobileMenuOpen(!mobileMenuOpen)}
+        isDrawerOpen={mobileMenuOpen}
       />
 
       {/* Global Modals */}
